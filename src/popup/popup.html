@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Universal Reading Theme</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Header with master switch -->
+      <header class="header">
+        <div class="brand">
+          <span class="brand-mark">A</span>
+          <h1 class="brand-name">Reading Theme</h1>
+        </div>
+        <label class="switch" title="Enable Theme">
+          <input type="checkbox" id="enabled" />
+          <span class="slider-toggle"></span>
+        </label>
+      </header>
+
+      <!-- Live preview -->
+      <section class="preview" id="preview">
+        <p class="preview-title">閱讀更舒適</p>
+        <p class="preview-body">
+          The quick brown fox <a href="#" id="preview-link">jumps over</a> the lazy dog.
+          護眼閱讀，從容自在。
+        </p>
+        <code class="preview-code">const theme = "code stays mono";</code>
+      </section>
+
+      <!-- Theme presets -->
+      <section class="group">
+        <span class="group-label">主題 Presets</span>
+        <div class="presets" id="presets">
+          <button class="preset" data-theme="paper" type="button">Paper</button>
+          <button class="preset" data-theme="warm" type="button">Warm</button>
+          <button class="preset" data-theme="dark" type="button">Dark</button>
+        </div>
+      </section>
+
+      <!-- Font -->
+      <section class="group">
+        <label class="group-label" for="font">字體 Font</label>
+        <div class="select-wrap">
+          <select id="font"></select>
+        </div>
+      </section>
+
+      <!-- Colors -->
+      <section class="group">
+        <span class="group-label">顏色 Colors</span>
+        <div class="color-row">
+          <label class="color-field">
+            <input type="color" id="bg" />
+            <span>背景</span>
+          </label>
+          <label class="color-field">
+            <input type="color" id="text" />
+            <span>文字</span>
+          </label>
+          <label class="color-field">
+            <input type="color" id="link" />
+            <span>連結</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Sliders -->
+      <section class="group">
+        <div class="slider-field">
+          <div class="slider-head">
+            <label for="lineHeight">行高 Line height</label>
+            <output id="lineHeight-val">1.7</output>
+          </div>
+          <input type="range" id="lineHeight" min="1" max="2.4" step="0.05" />
+        </div>
+
+        <div class="slider-field">
+          <div class="slider-head">
+            <label for="letterSpacing">字距 Letter spacing</label>
+            <output id="letterSpacing-val">0.03em</output>
+          </div>
+          <input type="range" id="letterSpacing" min="0" max="0.2" step="0.005" />
+        </div>
+
+        <div class="slider-field">
+          <div class="slider-head">
+            <label for="paragraphSpacing">段距 Paragraph</label>
+            <output id="paragraphSpacing-val">1.2em</output>
+          </div>
+          <input type="range" id="paragraphSpacing" min="0" max="3" step="0.1" />
+        </div>
+      </section>
+
+      <!-- Per-site disable -->
+      <section class="group site-group">
+        <div class="site-row">
+          <div class="site-text">
+            <span class="group-label">本網站停用</span>
+            <span class="site-host" id="site-host">—</span>
+          </div>
+          <label class="switch small" title="Disable on this site">
+            <input type="checkbox" id="site-disabled" />
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Footer actions -->
+      <footer class="footer">
+        <button class="btn-reset" id="reset" type="button">恢復預設</button>
+      </footer>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
