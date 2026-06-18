@@ -8,8 +8,11 @@
  * there is exactly one file to extend, so neither the rules nor the code scatter.
  *
  * Single responsibility: configuration data only — no logic, no side effects.
- * Imported by the AdGuard sub-blockers; the network list also feeds the
- * declarativeNetRequest ruleset (rules/ad-network-rules.json must stay in sync).
+ * Imported by the AdGuard sub-blockers. NOTE: the heavy lifting now comes from
+ * off-the-shelf engines — AdGuard declarativeNetRequest static rulesets
+ * (rules/declarative/, built by tools/build-rules.mjs) for the network layer, and
+ * the Ghostery cosmetic engine (assets/cosmetic-engine.bin) for element hiding.
+ * These curated lists remain as a lightweight, always-on supplement.
  */
 
 /**
@@ -138,11 +141,10 @@ export const AD_IFRAME_SIZES = new Set([
 ]);
 
 /**
- * Ad / tracker / pop network hostnames. Drives the declarativeNetRequest block
- * ruleset (rules/ad-network-rules.json mirrors this list) so banners, pop-unders
- * and trackers are killed at the request layer before they ever load. Matching
- * is by registrable domain, so subdomains (e.g. pagead2.googlesyndication.com)
- * are covered automatically.
+ * Ad / tracker / pop network hostnames. Used to build a small declarativeNetRequest
+ * DYNAMIC block rule in src/background.js as an always-current supplement to the
+ * comprehensive AdGuard static rulesets. Matching is by registrable domain, so
+ * subdomains (e.g. pagead2.googlesyndication.com) are covered automatically.
  */
 export const AD_NETWORK_DOMAINS = [
   'doubleclick.net',

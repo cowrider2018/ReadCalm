@@ -1,0 +1,20 @@
+{
+  "name": "universal-reading-theme",
+  "version": "1.0.0",
+  "description": "Unify fonts, background and text colors across every website for comfortable reading, with a comprehensive ad/tracker blocker (AdGuard DNR rulesets + Ghostery cosmetic engine).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:rules": "node tools/build-rules.mjs",
+    "build:engine": "node tools/build-engine.mjs",
+    "build:js": "node tools/build-js.mjs",
+    "build": "npm run build:rules && npm run build:engine && npm run build:js"
+  },
+  "dependencies": {
+    "@adguard/dnr-rulesets": "^4.1.20260618060103",
+    "@ghostery/adblocker": "^2.18.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}

@@ -130,5 +130,6 @@ export const DEBOUNCE_MS = 150;
 export const MSG = {
   APPLY: 'URT_APPLY', // push updated settings to a tab
   DISABLE: 'URT_DISABLE', // tell a tab to remove theming
-  GET_STATE: 'URT_GET_STATE' // popup asks content for current host state
+  GET_STATE: 'URT_GET_STATE', // popup asks content for current host state
+  GET_COSMETICS: 'URT_GET_COSMETICS' // content asks background for cosmetic hide CSS
 };

@@ -27,6 +27,7 @@ import { HardBlocker } from './hard-blocker.js';
 import { ElementBlocker } from './element-blocker.js';
 import { OverlayBlocker } from './overlay-blocker.js';
 import { PopupBlocker } from './popup-blocker.js';
+import { CosmeticBlocker } from './cosmetic-blocker.js';
 import { DEBOUNCE_MS } from '../../shared/defaults.js';
 import { logger, safe } from '../../shared/logger.js';
 
@@ -43,12 +44,16 @@ export class AdGuard {
     this.overlayBlocker = new OverlayBlocker();
     this.elementBlocker = new ElementBlocker();
     this.popupBlocker = new PopupBlocker();
+    this.cosmeticBlocker = new CosmeticBlocker();
     this._registry = [
       { key: 'removeAds', blocker: this.hardBlocker, marker: true, on: false },
       { key: 'blockOverlays', blocker: this.overlayBlocker, marker: true, on: false },
       { key: 'removeAds', blocker: this.elementBlocker, marker: true, on: false },
       // Lifecycle-only (no DOM scan): toggles the main-world window.open guard.
-      { key: 'blockPopups', blocker: this.popupBlocker, marker: false, on: false }
+      { key: 'blockPopups', blocker: this.popupBlocker, marker: false, on: false },
+      // Lifecycle-only: Ghostery cosmetic engine (comprehensive `##` element
+      // hiding via the background service worker). Shares the `removeAds` toggle.
+      { key: 'removeAds', blocker: this.cosmeticBlocker, marker: false, on: false }
     ];
 
     this.scanning = false; // are the observer + marker stylesheet live?

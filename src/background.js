@@ -17,17 +17,37 @@ import { DEFAULT_SETTINGS, MSG } from './shared/defaults.js';
 import { AD_NETWORK_DOMAINS } from './shared/ad-rules.js';
 import { DomainManager } from './content/domain-manager.js';
 import { logger } from './shared/logger.js';
+import { initCosmeticHost } from './cosmetic-host.js';
 
 const STORAGE_KEY = 'urt_settings';
 
-/* declarativeNetRequest dynamic-rule layout. The single block rule (id 1) drops
-   requests to ad/tracker/pop domains; allow rules (ids >= 1000) re-permit them
-   for blacklisted initiator sites and outrank the block rule via priority. */
+/* declarativeNetRequest layout.
+   - STATIC rulesets (AdGuard EasyList-grade filters, declared in manifest under
+     declarative_net_request.rule_resources) do the bulk of network blocking;
+     `blockAdRequests` enables/disables them via updateEnabledRulesets.
+   - A small DYNAMIC block rule (id 1) for the curated AD_NETWORK_DOMAINS is kept
+     as an always-current supplement.
+   - DYNAMIC allow rules (ids >= 1000) re-permit ALL requests from blacklisted
+     initiator sites. They use a very high priority so they outrank both our own
+     block rule and the high-priority block rules inside the AdGuard rulesets,
+     guaranteeing per-site disable fully exempts a site at the network layer. */
 const BLOCK_RULE_ID = 1;
 const ALLOW_RULE_BASE = 1000;
+const ALLOW_RULE_PRIORITY = 1_000_000_000; // outranks all static ruleset block rules
 const RESOURCE_TYPES = [
   'script', 'sub_frame', 'image', 'xmlhttprequest', 'ping',
   'media', 'object', 'font', 'websocket'
+];
+
+/* Static ruleset ids must match manifest.json declarative_net_request.rule_resources
+   (kept in sync by tools/build-rules.mjs). Toggled on/off with blockAdRequests. */
+const STATIC_RULESET_IDS = [
+  'ruleset_2', // AdGuard Base — ads
+  'ruleset_3', // Tracking Protection — trackers
+  'ruleset_224', // AdGuard Chinese
+  'ruleset_18', // Cookie Notices
+  'ruleset_19', // Popups
+  'ruleset_21' // Other Annoyances
 ];
 
 /* ------------------------------- Settings -------------------------------- */
@@ -73,7 +93,7 @@ async function syncNetworkRules(settings) {
     hosts.forEach((host, i) => {
       rules.push({
         id: ALLOW_RULE_BASE + i,
-        priority: 2,
+        priority: ALLOW_RULE_PRIORITY,
         action: { type: 'allow' },
         condition: { initiatorDomains: [host], resourceTypes: RESOURCE_TYPES }
       });
@@ -90,9 +110,33 @@ async function syncNetworkRules(settings) {
   } catch (err) {
     logger.error('syncNetworkRules failed:', err);
   }
+
+  await syncStaticRulesets(Boolean(settings.blockAdRequests));
+}
+
+/**
+ * Enable or disable the bundled AdGuard static rulesets to match blockAdRequests.
+ * They default to enabled in the manifest, so this only needs to act on toggle.
+ */
+async function syncStaticRulesets(on) {
+  if (!chrome.declarativeNetRequest || !chrome.declarativeNetRequest.updateEnabledRulesets) return;
+  try {
+    await chrome.declarativeNetRequest.updateEnabledRulesets(
+      on
+        ? { enableRulesetIds: STATIC_RULESET_IDS }
+        : { disableRulesetIds: STATIC_RULESET_IDS }
+    );
+    logger.log('Static rulesets', on ? 'enabled' : 'disabled');
+  } catch (err) {
+    logger.error('syncStaticRulesets failed:', err);
+  }
 }
 
 /* ------------------------------- Bootstrap ------------------------------- */
+
+/* Cosmetic (element-hiding) layer: serve Ghostery hide-CSS to content scripts.
+   Registered synchronously at top level so the listener exists on SW wake-up. */
+initCosmeticHost();
 
 /* On install/update, ensure a full settings object exists, then sync rules. */
 chrome.runtime.onInstalled.addListener(() => {

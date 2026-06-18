@@ -1,6 +1,12 @@
 # Claude Code local/session config (machine-specific permissions, etc.)
 .claude/
 
+# Node / build tooling (added with the AdGuard DNR + Ghostery cosmetic engine)
+node_modules/
+
+# Chrome-generated DNR ruleset index cache (created when loading unpacked)
+_metadata/
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db
