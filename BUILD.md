@@ -44,4 +44,9 @@ rulesets at runtime; blacklisted sites get a high-priority dynamic `allow` rule.
 
 Filter lists are redistributed under their own licenses — EasyList family (GPLv3 /
 CC BY-SA 3.0), AdGuard filters (GPLv3). `@adguard/dnr-rulesets` is GPL-3.0,
-`@ghostery/adblocker` is MPL-2.0. Keep these notices when distributing.
+`@ghostery/adblocker` is MPL-2.0. The default serif font (XCharter / Bitstream
+Charter) is under the Bitstream Charter free font license.
+
+These are documented for distribution in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md),
+with full license texts in [`LICENSES/`](LICENSES/). Keep these files in any
+distributed package. The extension's own code is MIT ([`LICENSE`](LICENSE)).

@@ -151,18 +151,36 @@ export class ThemeEngine {
   /** (Re)write the static CSS rules. Variable VALUES live on documentElement. */
   _refreshStaticRules() {
     if (!this._styleEl) return;
-    const fontUrl = safe(
-      () => chrome.runtime.getURL('assets/fonts/XCharter-Roman.woff2'),
-      '',
-      'getURL font'
-    );
+    const fontUrl = (file) =>
+      safe(() => chrome.runtime.getURL(`assets/fonts/${file}`), '', 'getURL font');
 
     this._styleEl.textContent = `
 @font-face {
   font-family: '${CHARTER_FAMILY}';
-  src: url("${fontUrl}") format('opentype');
-  font-weight: 300 700;
+  src: url("${fontUrl('XCharter-Roman.woff2')}") format('woff2');
+  font-weight: 400;
   font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: '${CHARTER_FAMILY}';
+  src: url("${fontUrl('XCharter-Italic.woff2')}") format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: '${CHARTER_FAMILY}';
+  src: url("${fontUrl('XCharter-Bold.woff2')}") format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: '${CHARTER_FAMILY}';
+  src: url("${fontUrl('XCharter-BoldItalic.woff2')}") format('woff2');
+  font-weight: 700;
+  font-style: italic;
   font-display: swap;
 }
 

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Universal Reading Theme",
   "version": "1.0.0",
-  "description": "Unify fonts, background and text colors across every website for comfortable reading. Warm cream + terracotta theme with Charter.",
+  "description": "Unify fonts, background and text colors across every website for comfortable reading. Warm cream + terracotta reading theme with the Charter serif font.",
   "permissions": [
     "storage",
     "tabs",
@@ -72,7 +72,10 @@
         "src/shared/ad-rules.js",
         "src/shared/color-utils.js",
         "src/shared/logger.js",
-        "assets/fonts/XCharter-Roman.woff2"
+        "assets/fonts/XCharter-Roman.woff2",
+      "assets/fonts/XCharter-Italic.woff2",
+      "assets/fonts/XCharter-Bold.woff2",
+      "assets/fonts/XCharter-BoldItalic.woff2"
       ],
       "matches": [
         "<all_urls>"

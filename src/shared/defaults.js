@@ -11,8 +11,8 @@
 
 /**
  * The internal CSS family name registered by the bundled Charter font.
- * The @font-face rule injected by ThemeEngine declares this exact name, so the
- * file's real internal name does not matter.
+ * The @font-face rules injected by ThemeEngine declare this exact name, so the
+ * files' real internal names do not matter.
  */
 export const CHARTER_FAMILY = 'Charter';
 
@@ -64,7 +64,7 @@ export function fontStackFor(value) {
 }
 
 /**
- * Built-in theme presets. The default ("paper") is Claude's signature cream
+ * Built-in theme presets. The default ("paper") is a warm cream reading
  * surface with terracotta links.
  */
 export const THEMES = {
