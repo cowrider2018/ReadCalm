@@ -25,7 +25,7 @@ export const FONT_OPTIONS = [
   {
     value: 'charter',
     label: 'Charter',
-    stack: `'${CHARTER_FAMILY}', 'Noto Serif TC', Georgia, 'Times New Roman', serif`
+    stack: `'${CHARTER_FAMILY}', Georgia, 'Arial Hebrew', 'Noto Sans Hebrew', 'Times New Roman', Times, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans CJK TC', 'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans CJK KR', serif`
   },
   {
     value: 'jhenghei',
