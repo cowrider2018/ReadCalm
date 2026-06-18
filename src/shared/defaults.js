@@ -84,6 +84,10 @@ export const DEFAULT_SETTINGS = {
   lineHeight: 1.7, // unitless line-height
   letterSpacing: 0.03, // em
   paragraphSpacing: 1.2, // em, vertical margin on <p>
+  removeAds: true, // hide common ad elements (selectors / attribute tokens / iframes)
+  blockOverlays: true, // remove interstitial / modal overlays + restore scrolling
+  blockPopups: true, // gate non-user-triggered window.open pop-ups / pop-unders
+  blockAdRequests: true, // block ad/tracker/pop network requests (declarativeNetRequest)
   whitelist: [], // when non-empty, ONLY these domains are themed
   blacklist: [], // these domains are never themed
   debug: false // gate console logging
@@ -115,6 +119,9 @@ export const SKIP_TAGS = new Set([
 
 /** Debounce window (ms) for batching MutationObserver-driven rescans. */
 export const DEBOUNCE_MS = 150;
+
+/* Ad-blocking data (selectors, tokens, sizes, network domains, overlay
+   thresholds) lives in its own single-source-of-truth file: ./ad-rules.js */
 
 /** Message types exchanged between popup / background / content. */
 export const MSG = {

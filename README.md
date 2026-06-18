@@ -18,6 +18,7 @@
 | 🖋️ 文字柔化 | 背景被改後，自動把純黑（`#000`）文字調整為墨色（`#3D3D3A`），降低對比刺眼感。 |
 | 📏 閱讀排版 | 可調行高（預設 1.7）、字距（預設 0.03em）、段落間距。 |
 | ⚡ 即時套用 | 在 Popup 調整後**不需重新整理**，目前分頁立即更新（Message Passing）。 |
+| 🧹 四層廣告封鎖 | **元件層**（選擇器＋任意屬性 `ad/ads` token，如 `data-owner="ad"`＋IAB iframe 啟發式）、**覆蓋層**（移除 interstitial/modal 並解鎖捲動）、**彈窗層**（MAIN-world 攔 `window.open`，只擋非使用者觸發）、**網路層**（`declarativeNetRequest` 從源頭擋廣告/追蹤請求）。四個開關各自獨立、**完全可逆**。 |
 | 🌐 白名單 / 黑名單 | 以 Domain 為單位（含子網域比對），永遠啟用或永遠停用。 |
 | 🔄 SPA 支援 | 以 `MutationObserver` 監控 React / Vue / Next.js 動態內容並自動套用。 |
 | 🚀 效能優化 | Debounce + `requestIdleCallback` + `WeakSet` 快取，不做每秒全頁掃描。 |
@@ -31,15 +32,25 @@
 universal-reading-theme/
 ├── manifest.json                 # MV3 設定
 ├── src/
-│   ├── background.js             # Service worker：安裝預設值、跨分頁廣播
+│   ├── background.js             # Service worker：預設值、跨分頁廣播、網路層規則
 │   ├── content/
 │   │   ├── loader.js             # classic content script，動態 import 模組入口
-│   │   ├── main.js               # 內容腳本入口：協調三大模組 + 訊息路由
+│   │   ├── main.js               # 內容腳本入口：協調模組 + 訊息路由
 │   │   ├── settings-manager.js   # SettingsManager：儲存 / 預設 / 同步
 │   │   ├── domain-manager.js     # DomainManager：白名單 / 黑名單 / Domain 比對
-│   │   └── theme-engine.js       # ThemeEngine：顏色判斷 / DOM 套用 / 動態更新
+│   │   ├── theme-engine.js       # ThemeEngine：顏色判斷 / DOM 套用 / 動態更新
+│   │   └── ad/                   # 廣告封鎖「邏輯」唯一命名空間
+│   │       ├── ad-guard.js       #   AdGuard 協調器：單一 Observer / 分派各 blocker
+│   │       ├── element-blocker.js#   元件層：選擇器 + 屬性 token + iframe 啟發式
+│   │       ├── hard-blocker.js   #   硬移除層：抗 CSS 的反廣告牆直接從 DOM 移除
+│   │       ├── overlay-blocker.js#   覆蓋層：interstitial 移除 + 解鎖捲動
+│   │       ├── scroll-lock.js    #   共用：ref-count 解鎖/還原頁面捲動
+│   │       └── popup-blocker.js  #   彈窗層（isolated 側）：切換 MAIN-world 旗標
+│   ├── page/
+│   │   └── popup-guard.js        # MAIN-world：攔截頁面自身的 window.open
 │   ├── shared/
-│   │   ├── defaults.js           # 預設值、主題、字體選項、常數
+│   │   ├── defaults.js           # 預設設定值、主題、字體選項、常數
+│   │   ├── ad-rules.js           # 廣告封鎖「資料」唯一來源（選擇器/token/網域/門檻）
 │   │   ├── color-utils.js        # 顏色解析 + 亮度演算法
 │   │   └── logger.js             # debug 日誌 + 安全包裝
 │   └── popup/
@@ -70,13 +81,56 @@ universal-reading-theme/
 如此一來 content / popup / background **共用同一份模組**（`SettingsManager`、
 `DomainManager`、`defaults`…），不需打包工具、單一真相來源、符合 ES6+。
 
-三大核心模組遵循**單一職責原則**：
+核心模組遵循**單一職責原則**：
 
 - **SettingsManager** — 只負責 `chrome.storage.sync` 的讀寫、合併預設值、跨分頁訂閱。
 - **DomainManager** — 只負責 hostname 正規化、子網域比對、`shouldApply()` 決策。
 - **ThemeEngine** — 把 settings 轉成頁面樣式：注入基礎 stylesheet（含 `@font-face`、
   CSS 變數、連結色、排版）＋ 以亮度演算法做**選擇性**的逐元素背景／文字重新上色，
   並用 debounce 的 `MutationObserver` 跟上動態內容。
+- **AdGuard（廣告封鎖協調器）** — 見下節。
+
+### 🛡️ 廣告封鎖架構（為何不會四散）
+
+核心原則是**資料與邏輯各自集中**，讓每種新廣告類型都有唯一歸屬：
+
+- **所有廣告「資料」→ [`src/shared/ad-rules.js`](src/shared/ad-rules.js) 單一來源**
+  （選擇器、`AD_TOKEN_RE`、IAB 尺寸、網路網域、覆蓋層門檻）。
+- **所有廣告「邏輯」→ [`src/content/ad/`](src/content/ad/) 單一命名空間**，由
+  **`AdGuard`** 協調器持有唯一的 `MutationObserver`、debounce/idle 批次、`WeakSet`
+  快取與共用的 `data-urt-ad` 標記，再分派給各**單一職責** blocker。每個開關都與
+  既有的 Domain 閘門（`shouldApply()`）做 AND。
+
+五層防護：
+
+1. **元件層（ElementBlocker）** — 注入選擇器 stylesheet（`display:none` 即時生效，
+   攔非同步載入的廣告）；另掃描**每個元素的所有屬性值**以 `AD_TOKEN_RE` **token 比對**
+   （命中 `ad`/`ads`/`advert(s)`/`sponsored` 或 `ad-`／`-ad` 邊界，如 `data-owner="ad"`、
+   `ad-slot`，但**不**用盲目子字串，故 `header`／`download`／`adsense`／`adidas` 不誤殺）；
+   再加 **IAB 尺寸跨來源 iframe** 啟發式。
+2. **硬移除層（HardBlocker）** — 針對**抗 CSS 隱藏**的反廣告封鎖牆（如 Google Funding
+   Choices 的 `.fc-ab-root`，其自身樣式表/inline `!important` 會壓過我們的 `display:none`），
+   直接 **`el.remove()` 從 DOM 移除**並解鎖捲動。清單在 `HARD_REMOVE_SELECTORS`。
+   **連續偵測**：AdGuard 的 `MutationObserver` 除 childList（重新注入）外也監看 `class`/`id`
+   變動（延遲後才掛上 `fc-ab-root` class 的既有元素），命中即再次移除。
+   *取捨*：移除的 DOM 在關閉開關時**不自動還原**（重整頁面即恢復）。
+3. **覆蓋層（OverlayBlocker）** — 偵測**定位 + 覆蓋 ≥60% 視窗 + 高 z-index + 帶廣告訊號**
+   的 interstitial/modal，隱藏之並**解鎖捲動**（共用 `scroll-lock.js` 還原
+   `html/body overflow:hidden`、`body position:fixed`）。保守條件避免誤殺正常內容彈窗。
+4. **彈窗層（PopupBlocker + page/popup-guard.js）** — content script 在 isolated world
+   無法攔頁面自身的 `window.open`，故以 **MAIN-world 注入腳本**包裹 `window.open`：
+   **只擋無使用者手勢（`navigator.userActivation`）的呼叫**，保留使用者親手點開的視窗
+   （含 OAuth）。透過 `<html data-urt-popup-guard>` 旗標開關，兩個 world 共用 DOM。
+5. **網路層（background.js + declarativeNetRequest）** — 從 `AD_NETWORK_DOMAINS` 動態
+   產生封鎖規則，在**請求層**擋掉廣告/追蹤/彈窗網域（banner、pop-under、tracker 根本
+   不下載）；黑名單站台以高優先序 `allow` 規則豁免，與停用主題一致。
+
+**安全與可逆**：純樣式隱藏（`data-urt-ad` + `display:none`），不刪 DOM；逐元素 `WeakSet`
+最多處理一次、debounce 批次掃描；關閉任一開關即移除標記、還原捲動、清除彈窗旗標、
+同步網路規則——**零殘留**。
+
+**已知限制（誠實告知）**：第一方自家網域廣告、YouTube 式影片 pre-roll，以及保守模式下
+**挾帶真實點擊**的 pop-under 仍可能漏網。
 
 ### 為什麼這樣設計效能才好？
 

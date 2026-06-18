@@ -3,7 +3,7 @@
   "name": "Universal Reading Theme",
   "version": "1.0.0",
   "description": "Unify fonts, background and text colors across every website for comfortable reading. Warm cream + terracotta theme with Charter.",
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "declarativeNetRequest"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background.js",
@@ -15,6 +15,13 @@
       "js": ["src/content/loader.js"],
       "run_at": "document_start",
       "all_frames": false
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/page/popup-guard.js"],
+      "run_at": "document_start",
+      "all_frames": false,
+      "world": "MAIN"
     }
   ],
   "action": {
@@ -40,7 +47,14 @@
         "src/content/settings-manager.js",
         "src/content/domain-manager.js",
         "src/content/theme-engine.js",
+        "src/content/ad/ad-guard.js",
+        "src/content/ad/element-blocker.js",
+        "src/content/ad/overlay-blocker.js",
+        "src/content/ad/hard-blocker.js",
+        "src/content/ad/scroll-lock.js",
+        "src/content/ad/popup-blocker.js",
         "src/shared/defaults.js",
+        "src/shared/ad-rules.js",
         "src/shared/color-utils.js",
         "src/shared/logger.js",
         "assets/fonts/XCharter-Roman.woff2"

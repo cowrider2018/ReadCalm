@@ -28,6 +28,10 @@ const els = {
   lineHeightVal: document.getElementById('lineHeight-val'),
   letterSpacingVal: document.getElementById('letterSpacing-val'),
   paragraphSpacingVal: document.getElementById('paragraphSpacing-val'),
+  removeAds: document.getElementById('removeAds'),
+  blockOverlays: document.getElementById('blockOverlays'),
+  blockPopups: document.getElementById('blockPopups'),
+  blockAdRequests: document.getElementById('blockAdRequests'),
   siteHost: document.getElementById('site-host'),
   siteDisabled: document.getElementById('site-disabled'),
   reset: document.getElementById('reset'),
@@ -91,6 +95,10 @@ function render() {
   els.paragraphSpacing.value = settings.paragraphSpacing;
   updateSliderOutputs();
 
+  els.removeAds.checked = !!settings.removeAds;
+  els.blockOverlays.checked = !!settings.blockOverlays;
+  els.blockPopups.checked = !!settings.blockPopups;
+  els.blockAdRequests.checked = !!settings.blockAdRequests;
   els.siteHost.textContent = host || '此頁面';
   const dm = new DomainManager(host);
   els.siteDisabled.checked = dm.inList(settings.blacklist);
@@ -160,6 +168,19 @@ function wireEvents() {
   );
   els.paragraphSpacing.addEventListener('input', () =>
     commit({ paragraphSpacing: parseFloat(els.paragraphSpacing.value) }, true)
+  );
+
+  els.removeAds.addEventListener('change', () =>
+    commit({ removeAds: els.removeAds.checked })
+  );
+  els.blockOverlays.addEventListener('change', () =>
+    commit({ blockOverlays: els.blockOverlays.checked })
+  );
+  els.blockPopups.addEventListener('change', () =>
+    commit({ blockPopups: els.blockPopups.checked })
+  );
+  els.blockAdRequests.addEventListener('change', () =>
+    commit({ blockAdRequests: els.blockAdRequests.checked })
   );
 
   els.siteDisabled.addEventListener('change', onSiteToggle);

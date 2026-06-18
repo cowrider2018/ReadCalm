@@ -1,0 +1,7 @@
+# Claude Code local/session config (machine-specific permissions, etc.)
+.claude/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log

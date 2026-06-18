@@ -14,16 +14,18 @@
 import { SettingsManager } from './settings-manager.js';
 import { DomainManager } from './domain-manager.js';
 import { ThemeEngine } from './theme-engine.js';
+import { AdGuard } from './ad/ad-guard.js';
 import { MSG } from '../shared/defaults.js';
 import { logger, setDebug, safe } from '../shared/logger.js';
 
 const settingsManager = new SettingsManager();
 const domainManager = new DomainManager();
 const engine = new ThemeEngine();
+const adGuard = new AdGuard();
 
 let currentSettings = null;
 
-/** Apply or remove theming based on the latest settings + domain rules. */
+/** Apply or remove theming + ad blocking based on settings + domain rules. */
 function reconcile(settings) {
   currentSettings = settings;
   setDebug(settings.debug);
@@ -36,6 +38,10 @@ function reconcile(settings) {
   } else if (engine.active) {
     engine.disable();
   }
+
+  // AdGuard owns every ad-blocking layer; it AND-s each layer's flag with the
+  // shared domain gate internally.
+  adGuard.apply(settings, shouldApply);
 }
 
 /** Boot: load settings and do the first reconcile as early as possible. */
@@ -63,6 +69,7 @@ function onMessage(message, _sender, sendResponse) {
       return false;
     case MSG.DISABLE:
       if (engine.active) engine.disable();
+      adGuard.disable();
       sendResponse({ ok: true });
       return false;
     case MSG.GET_STATE:
