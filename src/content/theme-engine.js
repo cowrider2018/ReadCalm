@@ -20,6 +20,7 @@ import {
   DEBOUNCE_MS,
   MONO_STACK,
   CHARTER_FAMILY,
+  BTN_TEXT_COLOR,
   fontStackFor
 } from '../shared/defaults.js';
 import {
@@ -32,6 +33,7 @@ import { logger, safe } from '../shared/logger.js';
 
 const STYLE_ID = 'urt-base-style';
 const MARK_ATTR = 'data-urt'; // marks elements we have given inline overrides
+const BTN_MARK_ATTR = 'data-urt-btn'; // marks elements recolored as terracotta buttons
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /* Selector matching code-ish elements that must stay monospace. */
@@ -48,6 +50,15 @@ const ICON_SELECTOR =
 
 /* Elements excluded from the font-family + letter-spacing override. */
 const FONT_EXCLUDE = `${MONO_SELECTOR}, ${ICON_SELECTOR}`;
+
+/* Button-like elements that should become terracotta action buttons. */
+const BTN_SELECTOR =
+  'button, [role="button"], input[type="submit"], input[type="button"], ' +
+  'input[type="reset"], a.btn, a.button, a[class*="btn"], a[class*="button"]';
+
+/* :not() chain to exclude button-like links from the inline-link rule. */
+const BTN_LINK_EXCLUDE =
+  ':not(.btn):not(.button):not([class*="btn"]):not([class*="button"]):not([role="button"])';
 
 export class ThemeEngine {
   constructor() {
@@ -168,9 +179,18 @@ p {
   margin-bottom: var(--urt-ps) !important;
 }
 
-/* Terracotta links (Claude accent). */
-a, a *:not(${MONO_SELECTOR}) {
-  color: var(--urt-link) !important;
+/* Inline links: ink-colored text (no terracotta), keep underline to stay recognizable. */
+a${BTN_LINK_EXCLUDE}, a${BTN_LINK_EXCLUDE} *:not(${MONO_SELECTOR}) {
+  color: var(--urt-text) !important;
+}
+a${BTN_LINK_EXCLUDE} {
+  text-decoration: underline;
+}
+
+/* Terracotta buttons are recolored per-element in JS (only when they already
+   have a visible background); the static rule just darkens them on hover. */
+[${BTN_MARK_ATTR}]:hover {
+  filter: brightness(0.93);
 }
 `;
   }
@@ -231,6 +251,30 @@ a, a *:not(${MONO_SELECTOR}) {
       return; // detached / cross-origin edge cases
     }
     if (!style) return;
+
+    // Button-like elements: turn into a terracotta action button ONLY when they
+    // already have a visible background. Borderless / text-only buttons are left
+    // untouched (recoloring would invent a fill the site never had).
+    if (el.matches(BTN_SELECTOR)) {
+      const btnBg = parseColor(style.backgroundColor);
+      if (!isTransparent(btnBg)) {
+        el.style.setProperty('background-color', this.settings.link, 'important');
+        el.style.setProperty('border-color', this.settings.link, 'important');
+        el.style.setProperty('color', BTN_TEXT_COLOR, 'important');
+        el.setAttribute(MARK_ATTR, '1');
+        el.setAttribute(BTN_MARK_ATTR, '1');
+      }
+      this.processed.add(el);
+      return;
+    }
+
+    // Inside a recolored button → match the cream button text, skip generic recolor.
+    if (el.closest(`[${BTN_MARK_ATTR}]`)) {
+      el.style.setProperty('color', BTN_TEXT_COLOR, 'important');
+      el.setAttribute(MARK_ATTR, '1');
+      this.processed.add(el);
+      return;
+    }
 
     // --- Background: only rewrite explicit, visible, near-white fills. ---
     const bg = parseColor(style.backgroundColor);
@@ -317,8 +361,10 @@ a, a *:not(${MONO_SELECTOR}) {
     safe(() => {
       document.querySelectorAll(`[${MARK_ATTR}]`).forEach((el) => {
         el.style.removeProperty('background-color');
+        el.style.removeProperty('border-color');
         el.style.removeProperty('color');
         el.removeAttribute(MARK_ATTR);
+        el.removeAttribute(BTN_MARK_ATTR);
       });
     }, null, 'clearInlineOverrides');
   }

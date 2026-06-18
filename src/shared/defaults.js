@@ -102,6 +102,9 @@ export const BRIGHTNESS_THRESHOLD = 240;
  *  Kept below #333 (brightness ~51) so our own softened ink isn't re-touched. */
 export const NEAR_BLACK_MAX = 40;
 
+/** Text color inside terracotta action buttons (cream, contrasts with link color). */
+export const BTN_TEXT_COLOR = '#F0EEE6';
+
 /** Elements whose visuals must never be touched (media / embedded content). */
 export const SKIP_TAGS = new Set([
   'IMG',
