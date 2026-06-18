@@ -48,8 +48,24 @@ const ICON_SELECTOR =
   '.glyphicon, [class^="glyphicon-"], .bi, [class^="bi-"], [class*=" bi-"], ' +
   '[class*="icon-"]';
 
-/* Elements excluded from the font-family + letter-spacing override. */
+/* Elements excluded from the font-family override (icon fonts & code). */
 const FONT_EXCLUDE = `${MONO_SELECTOR}, ${ICON_SELECTOR}`;
+
+/* Layout-sensitive single-line UI controls (and their descendants) that should
+   keep their NATIVE line-height / letter-spacing. Forcing reading metrics here
+   grows buttons taller and overflows fixed-width chrome. Intentionally limited
+   to explicit interactive/form elements & ARIA roles — no `[class*="nav"]`
+   string heuristics, which would wrongly catch body containers. */
+const UI_SELECTOR =
+  'button, button *, ' +
+  '[role="button"], [role="button"] *, ' +
+  '[role="tab"], [role="tab"] *, ' +
+  '[role="menuitem"], [role="menuitem"] *, ' +
+  'input, select, textarea, ' +
+  'nav, nav *';
+
+/* Shared exclusion set for the line-height + letter-spacing rule. */
+const LAYOUT_EXCLUDE = `${MONO_SELECTOR}, ${ICON_SELECTOR}, ${UI_SELECTOR}`;
 
 /* Button-like elements that should become terracotta action buttons. */
 const BTN_SELECTOR =
@@ -156,15 +172,17 @@ html, body {
   color: var(--urt-text) !important;
 }
 
-/* Font + letter-spacing on (almost) every element. Icon fonts & code excluded. */
+/* Font swap stays broad — buttons should use the reading font too.
+   Only icon fonts & code are excluded. */
 body, body *:not(${FONT_EXCLUDE}) {
   font-family: var(--urt-font) !important;
-  letter-spacing: var(--urt-ls) !important;
 }
 
-/* Line-height is safe on icons, so only code is excluded here. */
-body, body *:not(${MONO_SELECTOR}) {
+/* Line-height & letter-spacing affect layout, so skip code / icon fonts and
+   single-line UI controls (and their descendants). Body text keeps the rhythm. */
+body, body *:not(${LAYOUT_EXCLUDE}) {
   line-height: var(--urt-lh) !important;
+  letter-spacing: var(--urt-ls) !important;
 }
 
 /* Keep code readable: monospace + normal spacing. */
